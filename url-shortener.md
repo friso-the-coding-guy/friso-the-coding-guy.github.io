@@ -35,6 +35,8 @@ See [commit 8e2815b](https://github.com/friso-the-coding-guy/url-shortener/commi
 # Adding Express
 See [commit 54a8a29](https://github.com/friso-the-coding-guy/url-shortener/commit/54a8a296a9a987cb5a6d6dcb5ab49657a41069e8).
 
+`npm install express`
+
 ```javascript
 const express = require('express');
 const app = express();
@@ -52,5 +54,123 @@ app.listen(port, () => {
 ```
 
 # Adding MongoDB
+See [commit 8ab1447](https://github.com/friso-the-coding-guy/url-shortener/commit/8ab1447596fbc431d451ec6d9d0dd964ebf2c169)
+
+
+```gitignore
+# Database
+db 
+```
 
 `mongod -dbpath db/data`
+
+## Setting up MongoDB
+`npm install mongodb`
+
+```json
+{
+  "...",
+  "dependencies": {
+    "...",
+    "mongodb": "^3.6.7"
+  },
+}
+```
+
+```javascript
+const MongoClient = require('mongodb').MongoClient;
+const ObjectId = require('mongodb').ObjectId;
+const mongoUri = 'mongodb://localhost:27017';
+const urlCollection = 'url-shortener';
+
+const client = new MongoClient(mongoUri, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+
+})
+```
+
+
+## More Express Functionality
+
+```javascript
+app.use(express.json());
+
+app.post('/', async (request, response) => {
+    const body = request.body;
+    //insert into database
+});
+
+app.get('/:id', async (request, response) => {
+    const id = request.params.id;
+    //get from database
+});
+```
+
+```json
+{
+  '...',
+  ops: [ { url: 'https://example.com/', _id: 60ac0c12e9e13a05087b3e41 } ],
+}
+```
+
+## Inserting Into MongoDB
+```javascript
+try {
+  //connect to db
+  await client.connect();
+  const db = client.db();
+  const urls = db.collection(urlCollection);
+
+  // insert the data
+  const result = await urls.insertOne(body)
+
+  // return the saved object
+  response.send({
+    id: result.ops
+  });
+} catch (error) {
+  // do something with the error
+} finally {
+  client.close();
+}
+```
+
+## Find In MongoDB
+
+```javascript
+try{
+  //connect to db
+  await client.connect();
+  const db = client.db();
+  const urls = db.collection(urlCollection);
+
+  //find saved 
+  const result = await urls.findOne({ _id: ObjectId(id)});
+
+  urls.listIndexes();
+
+  //return saved
+  response.send(result);
+} catch (error) {
+  console.error(error);
+  response.send(error);
+} finally {
+  client.close();
+}
+```
+
+## Current Issue
+Need to restart node after every command, client doesn't seem to close properly
+
+## MongoDB Warnings
+```powershell
+(node:657) [MONGODB DRIVER] Warning: the options [mode] is not supported
+(node:657) [MONGODB DRIVER] Warning: the options [tags] is not supported
+(node:657) [MONGODB DRIVER] Warning: the options [hedge] is not supported
+(node:657) [MONGODB DRIVER] Warning: the options [preference] is not supported
+(node:657) [MONGODB DRIVER] Warning: the options [isValid] is not supported
+(node:657) [MONGODB DRIVER] Warning: the options [slaveOk] is not supported
+(node:657) [MONGODB DRIVER] Warning: the options [equals] is not supported
+(node:657) [MONGODB DRIVER] Warning: the options [toJSON] is not supported
+```
