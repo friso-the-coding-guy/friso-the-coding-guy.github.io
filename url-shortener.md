@@ -1,8 +1,10 @@
 # Technologies
 
-* [NodeJS]()
-* [ExpressJS]()
-* [MongoDB]()
+* [NodeJS](https://nodejs.org/en/)
+* [Nodemon](https://nodemon.io)
+* [ExpressJS](http://expressjs.com)
+* [MongoDB](https://www.mongodb.com)
+* [Postman](https://www.postman.com)
 
 
 # Setup
@@ -148,8 +150,6 @@ try{
   //find saved 
   const result = await urls.findOne({ _id: ObjectId(id)});
 
-  urls.listIndexes();
-
   //return saved
   response.send(result);
 } catch (error) {
@@ -162,6 +162,61 @@ try{
 
 ## Current Issue
 Need to restart node after every command, client doesn't seem to close properly
+
+SOLVED in [commit e7bb71c](https://github.com/friso-the-coding-guy/url-shortener/commit/e7bb71ce4606b78b763eec86c1c73c03041ca1f3) by using callback functions instead of awaiting asynchronous calls.
+
+```javascript
+app.post('/', (request, response) => {
+    const body = request.body;
+    console.log(body);
+
+    mongoClient.connect(async (error, client) => {
+        if (error) {
+            console.error(error);
+            response.status(400).send(error);
+        }
+
+        const db = client.db(URLDATABASE);
+        const urls = db.collection(URLCOLLECTION);
+
+        // put in the data
+        urls.insertOne(body, (error, result) => {
+            if (error) {
+                console.error(error);
+                response.status(400).send(error);
+            }
+
+            response.send({
+                id: result.ops
+            });
+        });
+    });
+});
+
+app.get('/:id', (request, response) => {
+    const id = request.params.id;
+
+    mongoClient.connect((error, client) => {
+        if (error) {
+            console.error(error);
+            response.status(400).send(error);
+        }
+
+        const db = client.db(URLDATABASE);
+        const urls = db.collection(URLCOLLECTION);
+
+        //find saved 
+        urls.findOne({ _id: OBJECTID(id)}, (error, result) => {
+            if (error) {
+                console.error(error);
+                response.status(400).send(error);
+            }
+
+            response.send(result);
+        });
+    });
+});
+```
 
 ## MongoDB Warnings
 ```powershell
